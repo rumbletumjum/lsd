@@ -101,9 +101,9 @@ impl Colors {
         m.insert(Elem::Group, Colour::Fixed(187)); // LightYellow3
 
         // Permissions
-        m.insert(Elem::Read, Colour::Fixed(40)); // Green3
+        m.insert(Elem::Read, Colour::Green); // Green3
         m.insert(Elem::Write, Colour::Fixed(192)); // DarkOliveGreen1
-        m.insert(Elem::Exec, Colour::Fixed(124)); // Red3
+        m.insert(Elem::Exec, Colour::Red); // Red3
         m.insert(Elem::ExecSticky, Colour::Fixed(13)); // Fuchsia
         m.insert(Elem::NoAccess, Colour::Fixed(168)); // HotPink3
 
@@ -113,31 +113,31 @@ impl Colors {
                 exec: false,
                 uid: false,
             },
-            Colour::Fixed(184),
+            Colour::Cyan,
         ); // Yellow3
         m.insert(
             Elem::File {
                 exec: false,
                 uid: true,
             },
-            Colour::Fixed(184),
+            Colour::Yellow,
         ); // Yellow3
         m.insert(
             Elem::File {
                 exec: true,
                 uid: false,
             },
-            Colour::Fixed(40),
+            Colour::Green,
         ); // Green3
         m.insert(
             Elem::File {
                 exec: true,
                 uid: true,
             },
-            Colour::Fixed(40),
+            Colour::Red,
         ); // Green3
-        m.insert(Elem::Dir { uid: true }, Colour::Fixed(33)); // DodgerBlue1
-        m.insert(Elem::Dir { uid: false }, Colour::Fixed(33)); // DodgerBlue1
+        m.insert(Elem::Dir { uid: true }, Colour::Blue); // DodgerBlue1
+        m.insert(Elem::Dir { uid: false }, Colour::Blue); // DodgerBlue1
         m.insert(Elem::Pipe, Colour::Fixed(44)); // DarkTurquoise
         m.insert(Elem::SymLink, Colour::Fixed(44)); // DarkTurquoise
         m.insert(Elem::BrokenSymLink, Colour::Fixed(124)); // Red3
@@ -147,7 +147,7 @@ impl Colors {
         m.insert(Elem::Special, Colour::Fixed(44)); // DarkTurquoise
 
         // Last Time Modified
-        m.insert(Elem::HourOld, Colour::Fixed(40)); // Green3
+        m.insert(Elem::HourOld, Colour::Green); // Green3
         m.insert(Elem::DayOld, Colour::Fixed(42)); // SpringGreen2
         m.insert(Elem::Older, Colour::Fixed(36)); // DarkCyan
 

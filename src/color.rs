@@ -147,9 +147,9 @@ impl Colors {
         m.insert(Elem::Special, Colour::Fixed(44)); // DarkTurquoise
 
         // Last Time Modified
-        m.insert(Elem::HourOld, Colour::Green); // Green3
-        m.insert(Elem::DayOld, Colour::Fixed(42)); // SpringGreen2
-        m.insert(Elem::Older, Colour::Fixed(36)); // DarkCyan
+        m.insert(Elem::HourOld, Colour::Purple); // Green3
+        m.insert(Elem::DayOld, Colour::Cyan); // SpringGreen2
+        m.insert(Elem::Older, Colour::Blue); // DarkCyan
 
         // Last Time Modified
         m.insert(Elem::NonFile, Colour::Fixed(15)); // White

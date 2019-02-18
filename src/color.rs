@@ -152,10 +152,10 @@ impl Colors {
         m.insert(Elem::Older, Colour::Blue); // DarkCyan
 
         // Last Time Modified
-        m.insert(Elem::NonFile, Colour::Fixed(15)); // White
-        m.insert(Elem::FileSmall, Colour::Fixed(229)); // Wheat1
-        m.insert(Elem::FileMedium, Colour::Fixed(216)); // LightSalmon1
-        m.insert(Elem::FileLarge, Colour::Fixed(172)); // Orange3
+        m.insert(Elem::NonFile, Colour::White); // White
+        m.insert(Elem::FileSmall, Colour::Green);
+        m.insert(Elem::FileMedium, Colour::Green); // LightSalmon1
+        m.insert(Elem::FileLarge, Colour::Green); // Orange3
 
         m
     }

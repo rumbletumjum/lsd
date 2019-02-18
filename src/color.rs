@@ -127,7 +127,7 @@ impl Colors {
                 exec: true,
                 uid: false,
             },
-            Colour::Fixed(198),
+            Colour::Green,
         ); // Green3
         m.insert(
             Elem::File {

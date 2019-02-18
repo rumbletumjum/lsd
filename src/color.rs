@@ -102,10 +102,10 @@ impl Colors {
 
         // Permissions
         m.insert(Elem::Read, Colour::Green); // Green3
-        m.insert(Elem::Write, Colour::Fixed(192)); // DarkOliveGreen1
+        m.insert(Elem::Write, Colour::Yellow); // DarkOliveGreen1
         m.insert(Elem::Exec, Colour::Red); // Red3
         m.insert(Elem::ExecSticky, Colour::Fixed(13)); // Fuchsia
-        m.insert(Elem::NoAccess, Colour::Fixed(168)); // HotPink3
+        m.insert(Elem::NoAccess, Colour::Purple); // HotPink3
 
         // File Types
         m.insert(

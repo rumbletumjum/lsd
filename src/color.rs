@@ -97,15 +97,15 @@ impl Colors {
     fn get_light_theme_colour_map() -> HashMap<Elem, Colour> {
         let mut m = HashMap::new();
         // User / Group
-        m.insert(Elem::User, Colour::Fixed(230)); // Cornsilk1
-        m.insert(Elem::Group, Colour::Fixed(187)); // LightYellow3
+        m.insert(Elem::User, Colour::Yellow); // Cornsilk1
+        m.insert(Elem::Group, Colour::Yellow); // LightYellow3
 
         // Permissions
-        m.insert(Elem::Read, Colour::Green); // Green3
-        m.insert(Elem::Write, Colour::Yellow); // DarkOliveGreen1
-        m.insert(Elem::Exec, Colour::Red); // Red3
+        m.insert(Elem::Read, Colour::Yellow); // Green3
+        m.insert(Elem::Write, Colour::Red); // DarkOliveGreen1
+        m.insert(Elem::Exec, Colour::Green); // Red3
         m.insert(Elem::ExecSticky, Colour::Fixed(13)); // Fuchsia
-        m.insert(Elem::NoAccess, Colour::Purple); // HotPink3
+        m.insert(Elem::NoAccess, Colour::White); // HotPink3
 
         // File Types
         m.insert(

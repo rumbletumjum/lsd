@@ -2,15 +2,14 @@ use clap::{ArgMatches, Error, ErrorKind};
 
 #[derive(Clone, Debug, Copy)]
 pub struct Flags {
-    pub display_all: bool,
-    pub display_long: bool,
-    pub display_online: bool,
-    pub display_tree: bool,
+    pub display: Display,
+    pub layout: Layout,
     pub display_indicators: bool,
     pub recursive: bool,
     pub sort_by: SortFlag,
     pub sort_order: SortOrder,
     pub directory_order: DirOrderFlag,
+    pub size: SizeFlag,
     pub date: DateFlag,
     pub color: WhenFlag,
     pub icon: WhenFlag,
@@ -24,8 +23,17 @@ impl Flags {
         let color_inputs: Vec<&str> = matches.values_of("color").unwrap().collect();
         let icon_inputs: Vec<&str> = matches.values_of("icon").unwrap().collect();
         let icon_theme_inputs: Vec<&str> = matches.values_of("icon-theme").unwrap().collect();
+        let size_inputs: Vec<&str> = matches.values_of("size").unwrap().collect();
         let date_inputs: Vec<&str> = matches.values_of("date").unwrap().collect();
         let dir_order_inputs: Vec<&str> = matches.values_of("group-dirs").unwrap().collect();
+
+        let display = if matches.is_present("all") {
+            Display::DisplayAll
+        } else if matches.is_present("almost-all") {
+            Display::DisplayAlmostAll
+        } else {
+            Display::DisplayOnlyVisible
+        };
 
         let sort_by = if matches.is_present("timesort") {
             SortFlag::Time
@@ -37,38 +45,44 @@ impl Flags {
         } else {
             SortOrder::Default
         };
-
-        let display_tree = matches.is_present("tree");
+        let layout = if matches.is_present("tree") {
+            Layout::Tree
+        } else if matches.is_present("long") {
+            Layout::OneLine { long: true }
+        } else if matches.is_present("oneline") {
+            Layout::OneLine { long: false }
+        } else {
+            Layout::Grid
+        };
         let recursive = matches.is_present("recursive");
         let recursion_depth = match matches.value_of("depth") {
-            Some(str) if recursive || display_tree => match str.parse::<usize>() {
+            Some(str) if recursive || layout == Layout::Tree => match str.parse::<usize>() {
                 Ok(val) => val,
                 Err(_) => {
                     return Err(Error::with_description(
                         "The argument '--depth' requires a valid positive number",
                         ErrorKind::ValueValidation,
-                    ))
+                    ));
                 }
             },
             Some(_) => {
                 return Err(Error::with_description(
                     "The argument '--depth' requires '--tree' or '--recursive'",
                     ErrorKind::MissingRequiredArgument,
-                ))
+                ));
             }
             None => usize::max_value(),
         };
 
         Ok(Self {
-            display_all: matches.is_present("all"),
-            display_long: matches.is_present("long"),
-            display_online: matches.is_present("oneline"),
-            display_tree,
+            display,
+            layout,
             display_indicators: matches.is_present("indicators"),
             recursive,
             recursion_depth,
             sort_by,
             sort_order,
+            size: SizeFlag::from(size_inputs[size_inputs.len() - 1]),
             // Take only the last value
             date: if classic_mode {
                 DateFlag::Date
@@ -98,20 +112,42 @@ impl Flags {
 impl Default for Flags {
     fn default() -> Self {
         Self {
-            display_all: false,
-            display_long: false,
-            display_online: false,
-            display_tree: false,
+            display: Display::DisplayOnlyVisible,
+            layout: Layout::Grid,
             display_indicators: false,
             recursive: false,
             recursion_depth: usize::max_value(),
             sort_by: SortFlag::Name,
             sort_order: SortOrder::Default,
             directory_order: DirOrderFlag::None,
+            size: SizeFlag::Default,
             date: DateFlag::Date,
             color: WhenFlag::Auto,
             icon: WhenFlag::Auto,
             icon_theme: IconTheme::Fancy,
+        }
+    }
+}
+
+#[derive(Clone, Debug, Copy, PartialEq, Eq)]
+pub enum Display {
+    DisplayAll,
+    DisplayAlmostAll,
+    DisplayOnlyVisible,
+}
+
+#[derive(Clone, Debug, Copy, PartialEq, Eq)]
+pub enum SizeFlag {
+    Default,
+    Short,
+}
+
+impl<'a> From<&'a str> for SizeFlag {
+    fn from(size: &'a str) -> Self {
+        match size {
+            "default" => SizeFlag::Default,
+            "short" => SizeFlag::Short,
+            _ => panic!("invalid \"size\" flag: {}", size),
         }
     }
 }
@@ -194,6 +230,13 @@ impl<'a> From<&'a str> for IconTheme {
             _ => panic!("invalid \"icon-theme\" flag: {}", theme),
         }
     }
+}
+
+#[derive(Clone, Debug, Copy, PartialEq, Eq)]
+pub enum Layout {
+    Grid,
+    Tree,
+    OneLine { long: bool },
 }
 
 #[cfg(test)]

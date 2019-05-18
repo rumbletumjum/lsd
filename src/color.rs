@@ -55,7 +55,6 @@ impl Elem {
 
 pub type ColoredString<'a> = ANSIString<'a>;
 
-
 #[allow(dead_code)]
 #[derive(Debug, Copy, Clone)]
 pub enum Theme {
@@ -105,25 +104,23 @@ impl Colors {
     fn style_from_path(&self, path: &str) -> Option<Style> {
         match &self.lscolors {
             Some(lscolors) => lscolors
-                    .style_for_path(path)
-                    .map(lscolors::Style::to_ansi_term_style),
+                .style_for_path(path)
+                .map(lscolors::Style::to_ansi_term_style),
             None => None,
         }
     }
 
     fn style(&self, elem: &Elem) -> Style {
         match &self.lscolors {
-            Some(lscolors) => {
-                match self.get_indicator_from_elem(elem) {
-                    Some(style) => {
-                        let style = lscolors.style_for_indicator(style);
-                        style
-                            .map(lscolors::Style::to_ansi_term_style)
-                            .unwrap_or_default()
-                    }
-                    None => self.style_default(elem),
+            Some(lscolors) => match self.get_indicator_from_elem(elem) {
+                Some(style) => {
+                    let style = lscolors.style_for_indicator(style);
+                    style
+                        .map(lscolors::Style::to_ansi_term_style)
+                        .unwrap_or_default()
                 }
-            }
+                None => self.style_default(elem),
+            },
             None => self.style_default(elem),
         }
     }
@@ -180,11 +177,19 @@ impl Colors {
         m.insert(Elem::Group, Colour::Yellow); // LightYellow3
 
         // Permissions
+<<<<<<< HEAD
         m.insert(Elem::Read, Colour::Yellow); // Green3
         m.insert(Elem::Write, Colour::Red); // DarkOliveGreen1
         m.insert(Elem::Exec, Colour::Green); // Red3
         m.insert(Elem::ExecSticky, Colour::Fixed(13)); // Fuchsia
         m.insert(Elem::NoAccess, Colour::White); // HotPink3
+=======
+        m.insert(Elem::Read, Colour::Green);
+        m.insert(Elem::Write, Colour::Yellow);
+        m.insert(Elem::Exec, Colour::Red);
+        m.insert(Elem::ExecSticky, Colour::Purple);
+        m.insert(Elem::NoAccess, Colour::Fixed(245)); // Grey
+>>>>>>> 79416127c824ab3ec749e28576f951ee533dfc33
 
         // File Types
         m.insert(
@@ -231,10 +236,17 @@ impl Colors {
         m.insert(Elem::Older, Colour::Blue); // DarkCyan
 
         // Last Time Modified
+<<<<<<< HEAD
         m.insert(Elem::NonFile, Colour::White); // White
         m.insert(Elem::FileSmall, Colour::Green);
         m.insert(Elem::FileMedium, Colour::Green); // LightSalmon1
         m.insert(Elem::FileLarge, Colour::Green); // Orange3
+=======
+        m.insert(Elem::NonFile, Colour::Fixed(245)); // Grey
+        m.insert(Elem::FileSmall, Colour::Fixed(229)); // Wheat1
+        m.insert(Elem::FileMedium, Colour::Fixed(216)); // LightSalmon1
+        m.insert(Elem::FileLarge, Colour::Fixed(172)); // Orange3
+>>>>>>> 79416127c824ab3ec749e28576f951ee533dfc33
 
         m
     }

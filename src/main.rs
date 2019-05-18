@@ -17,7 +17,12 @@ extern crate term_grid;
 extern crate terminal_size;
 extern crate time;
 extern crate unicode_width;
+
+#[cfg(unix)]
 extern crate users;
+
+#[cfg(windows)]
+extern crate winapi;
 
 mod app;
 mod color;

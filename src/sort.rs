@@ -3,10 +3,6 @@ use crate::meta::{FileType, Meta};
 use std::cmp::Ordering;
 
 pub fn by_meta(a: &Meta, b: &Meta, flags: Flags) -> Ordering {
-    if flags.display_tree {
-        return by_name_with_files_first(a, b, flags);
-    }
-
     match flags.sort_by {
         SortFlag::Name => match flags.directory_order {
             DirOrderFlag::First => by_name_with_dirs_first(a, b, flags),
@@ -193,6 +189,8 @@ mod tests {
         // Create the file;
         let path_z = tmp_dir.path().join("zzz");
         File::create(&path_z).expect("failed to create file");
+
+        #[cfg(unix)]
         let success = Command::new("touch")
             .arg("-t")
             .arg("198511160000")
@@ -200,7 +198,18 @@ mod tests {
             .status()
             .unwrap()
             .success();
-        assert_eq!(true, success, "failed to exec mkfifo");
+
+        #[cfg(windows)]
+        let success = Command::new("powershell")
+            .arg("-Command")
+            .arg("$(Get-Item")
+            .arg(&path_z)
+            .arg(").lastwritetime=$(Get-Date \"11/16/1985\")")
+            .status()
+            .unwrap()
+            .success();
+
+        assert_eq!(true, success, "failed to change file timestamp");
         let meta_z = Meta::from_path(&path_z).expect("failed to get meta");
 
         let mut flags = Flags::default();

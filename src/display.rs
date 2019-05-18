@@ -1,5 +1,5 @@
 use crate::color::Colors;
-use crate::flags::Flags;
+use crate::flags::{Flags, Layout};
 use crate::icon::Icons;
 use crate::meta::{FileType, Meta};
 use ansi_term::{ANSIString, ANSIStrings};
@@ -47,13 +47,13 @@ fn inner_display_one_line(
     let mut output = String::new();
 
     let mut padding_rules = None;
-    if flags.display_long {
+    if let Layout::OneLine { long: true } = flags.layout {
         // Defining the padding rules is costly and so shouldn't be done several
         // times. That's why it's done outside the loop.
         padding_rules = Some(PaddingRules {
             user: detect_user_length(&metas),
             group: detect_group_length(&metas),
-            size: detect_size_lengths(&metas),
+            size: detect_size_lengths(&metas, flags),
             date: detect_date_length(&metas, flags),
         })
     }
@@ -67,7 +67,7 @@ fn inner_display_one_line(
             continue;
         }
 
-        if flags.display_long {
+        if let Layout::OneLine { long: true } = flags.layout {
             output += &get_long_output(&meta, &colors, &icons, flags, padding_rules.unwrap());
         } else {
             output += &get_short_output(&meta, &colors, &icons, flags);
@@ -257,16 +257,16 @@ fn get_long_output(
     let strings: &[ANSIString] = &[
         meta.file_type.render(colors),
         meta.permissions.render(colors),
-        ANSIString::from("  "),
+        ANSIString::from(" "),
         meta.owner.render_user(colors, padding_rules.user),
-        ANSIString::from("  "),
+        ANSIString::from(" "),
         meta.owner.render_group(colors, padding_rules.group),
-        ANSIString::from("  "),
+        ANSIString::from(" "),
         meta.size
-            .render(colors, padding_rules.size.0, padding_rules.size.1),
-        ANSIString::from("  "),
+            .render(colors, padding_rules.size.0, padding_rules.size.1, flags),
+        ANSIString::from(" "),
         meta.date.render(colors, padding_rules.date, flags),
-        ANSIString::from("  "),
+        ANSIString::from(" "),
         meta.name.render(colors, icons),
         meta.indicator.render(flags),
         meta.symlink.render(colors),
@@ -278,21 +278,12 @@ fn get_long_output(
 fn get_visible_width(input: &str) -> usize {
     let mut nb_invisible_char = 0;
 
-    for (idx, _) in input.match_indices("\u{1b}[38;5;" /* "\e[38;5;" */) {
-        let color_code = input.chars().skip(idx + 7);
-        let mut code_size = 0;
-        color_code
-            .skip_while(|x| {
-                code_size += 1;
-                char::is_numeric(*x)
-            })
-            .count();
-        nb_invisible_char += 6 + code_size; /* "\e[38;5;" + color number + "m" */
-    }
-
-    if nb_invisible_char > 0 {
-        // If no color have been set, the is no reset character.
-        nb_invisible_char += 3; /* "[0m" */
+    // If the input has color, do not compute the length contributed by the color to the actual length
+    if input.starts_with("\u{1b}[") {
+        let m_pos = input.find('m');
+        if let Some(len) = m_pos {
+            nb_invisible_char = len + 3 // 1 (index -> length) + 2 ( compensate for color reset chars )
+        }
     }
 
     UnicodeWidthStr::width(input) - nb_invisible_char
@@ -336,7 +327,7 @@ fn detect_date_length(metas: &[Meta], flags: Flags) -> usize {
     max_value_length
 }
 
-fn detect_size_lengths(metas: &[Meta]) -> (usize, usize) {
+fn detect_size_lengths(metas: &[Meta], flags: Flags) -> (usize, usize) {
     let mut max_value_length: usize = 0;
     let mut max_unit_size: usize = 0;
 
@@ -345,8 +336,8 @@ fn detect_size_lengths(metas: &[Meta]) -> (usize, usize) {
             max_value_length = meta.size.render_value().len();
         }
 
-        if meta.size.render_unit().len() > max_unit_size {
-            max_unit_size = meta.size.render_unit().len();
+        if meta.size.render_unit(flags).len() > max_unit_size {
+            max_unit_size = meta.size.render_unit(flags).len();
         }
     }
 
@@ -397,6 +388,7 @@ mod tests {
             // Add 3 characters for the icons.
             ("Ｈｅｌｌｏ,ｗｏｒｌｄ!", 25),
             ("ASCII1234-_", 14),
+            ("File with space", 18),
             ("制作样本。", 13),
             ("日本語", 9),
             ("샘플은 무료로 드리겠습니다", 29),
@@ -427,6 +419,7 @@ mod tests {
         for (s, l) in &[
             ("Ｈｅｌｌｏ,ｗｏｒｌｄ!", 22),
             ("ASCII1234-_", 11),
+            ("File with space", 15),
             ("制作样本。", 10),
             ("日本語", 6),
             ("샘플은 무료로 드리겠습니다", 26),
@@ -451,6 +444,41 @@ mod tests {
             // check if the color is present.
             assert_eq!(true, output.starts_with("\u{1b}[38;5;"));
             assert_eq!(true, output.ends_with("[0m"));
+
+            assert_eq!(get_visible_width(&output), *l);
+        }
+    }
+
+    #[test]
+    fn test_display_get_visible_width_without_colors() {
+        for (s, l) in &[
+            ("Ｈｅｌｌｏ,ｗｏｒｌｄ!", 22),
+            ("ASCII1234-_", 11),
+            ("File with space", 15),
+            ("制作样本。", 10),
+            ("日本語", 6),
+            ("샘플은 무료로 드리겠습니다", 26),
+            ("👩🐩", 4),
+            ("🔬", 2),
+        ] {
+            let path = Path::new(s);
+            let name = Name::new(
+                &path,
+                FileType::File {
+                    exec: false,
+                    uid: false,
+                },
+            );
+            let output = name
+                .render(
+                    &Colors::new(color::Theme::NoColor),
+                    &Icons::new(icon::Theme::NoIcon),
+                )
+                .to_string();
+
+            // check if the color is present.
+            assert_eq!(false, output.starts_with("\u{1b}[38;5;"));
+            assert_eq!(false, output.ends_with("[0m"));
 
             assert_eq!(get_visible_width(&output), *l);
         }

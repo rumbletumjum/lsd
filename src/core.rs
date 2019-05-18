@@ -1,9 +1,10 @@
 use crate::color::{self, Colors};
 use crate::display;
-use crate::flags::{Flags, IconTheme, WhenFlag};
+use crate::flags::{Flags, IconTheme, Layout, WhenFlag};
 use crate::icon::{self, Icons};
 use crate::meta::Meta;
 use crate::sort;
+use std::fs;
 use std::path::PathBuf;
 use terminal_size::terminal_size;
 
@@ -37,7 +38,7 @@ impl Core {
             //
             // Most of the programs does not handle correctly the ansi colors
             // or require a raw output (like the `wc` command).
-            inner_flags.display_online = true;
+            inner_flags.layout = Layout::OneLine { long: false };
         };
 
         Self {
@@ -59,16 +60,28 @@ impl Core {
     fn fetch(&self, paths: Vec<PathBuf>) -> Vec<Meta> {
         let mut meta_list = Vec::with_capacity(paths.len());
 
-        let depth = if self.flags.recursive || self.flags.display_tree {
+        let depth = if self.flags.recursive || self.flags.layout == Layout::Tree {
             self.flags.recursion_depth
         } else {
             1
         };
 
         for path in paths {
-            match Meta::from_path_recursive(&path.to_path_buf(), depth, self.flags.display_all) {
+            let absolute_path = match fs::canonicalize(&path) {
+                Ok(path) => path,
+                Err(err) => {
+                    eprintln!("cannot access '{}': {}", path.display(), err);
+                    continue;
+                }
+            };
+
+            match Meta::from_path_recursive(
+                &fs::canonicalize(&absolute_path.to_path_buf()).unwrap(),
+                depth,
+                self.flags.display,
+            ) {
                 Ok(meta) => meta_list.push(meta),
-                Err(err) => println!("cannot access '{}': {}", path.display(), err),
+                Err(err) => eprintln!("cannot access '{}': {}", path.display(), err),
             };
         }
 
@@ -86,14 +99,13 @@ impl Core {
     }
 
     fn display(&self, metas: Vec<Meta>) {
-        let output = if self.flags.display_online || self.flags.display_long {
-            display::one_line(metas, self.flags, &self.colors, &self.icons)
-        } else if self.flags.display_tree {
-            display::tree(metas, self.flags, &self.colors, &self.icons)
-        } else {
-            display::grid(metas, self.flags, &self.colors, &self.icons)
+        let output = match self.flags.layout {
+            Layout::OneLine { .. } => {
+                display::one_line(metas, self.flags, &self.colors, &self.icons)
+            }
+            Layout::Tree => display::tree(metas, self.flags, &self.colors, &self.icons),
+            Layout::Grid => display::grid(metas, self.flags, &self.colors, &self.icons),
         };
-
         print!("{}", output);
     }
 }
